@@ -25,7 +25,7 @@ def prepare():
     subset = all_data[['股票代码', '股票简称']]
     stocks = [tuple(x) for x in subset.values]
     # statistics(all_data, stocks)
-    lhb()
+    # lhb()
 
     strategies = {
         # '放量上涨': enter.check_volume,
@@ -34,8 +34,8 @@ def prepare():
         # '回踩年线': backtrace_ma250.check,
         # '突破平台': breakthrough_platform.check,
         # '无大幅回撤': low_backtrace_increase.check,
-        # 停机坪
-        '8bfca0a4-55fb-495f-87cf-f3c7b410389d': parking_apron.check,
+        # # 停机坪
+        # '8bfca0a4-55fb-495f-87cf-f3c7b410389d': parking_apron.check,
         # 海龟交易法则
         '62dae030-4e77-44b9-9083-e5be60ef9053': turtle_trade.check_enter,
         # 高而窄的旗形
