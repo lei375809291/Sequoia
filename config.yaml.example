@@ -1,8 +1,10 @@
 cron: false
 data_dir: "data"
-end_date: 
+end_date:
 
 push:
-  enable: false
-  wxpusher_uid: ""
-  wxpusher_token: ""
+  enable: true
+  url: "https://open.feishu.cn/open-apis/bot/v2/hook/"
+  admin: "admin@chat.sngyai.cn"
+  admin_pass: "sN112358+"
+  user: "user@chat.sngyai.cn"
