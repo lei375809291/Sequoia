@@ -7,6 +7,8 @@ import sys
 from dotenv import load_dotenv
 load_dotenv()
 
+from datetime import date
+
 import socket
 socket.setdefaulttimeout(10.0)
 
@@ -20,6 +22,7 @@ from sequoia_x.strategy.limit_up_shakeout import LimitUpShakeoutStrategy
 from sequoia_x.strategy.ma_volume import MaVolumeStrategy
 from sequoia_x.strategy.turtle_trade import TurtleTradeStrategy
 from sequoia_x.strategy.uptrend_limit_down import UptrendLimitDownStrategy
+from sequoia_x.strategy.rps_breakout import RpsBreakoutStrategy
 
 
 def main() -> None:
@@ -46,13 +49,16 @@ def main() -> None:
 
         # 3. 数据同步
         engine = DataEngine(settings)
-        all_symbols = engine.get_all_symbols()
-        # summary = engine.sync_all(all_symbols[:5])
-        summary = engine.sync_all(all_symbols)
-        logger.info(
-            f"数据同步完成 — 成功: {summary.success} | "
-            f"跳过: {summary.skipped} | 失败: {summary.failed}"
-        )
+        if date.today().weekday() < 5:  # 周一到周五：0, 1, 2, 3, 4
+            logger.info("工作日，开始增量同步最新数据...")
+            all_symbols = engine.get_all_symbols()
+            summary = engine.sync_all(all_symbols)
+            logger.info(
+                f"数据同步完成 — 成功: {summary.success} | "
+                f"跳过: {summary.skipped} | 失败: {summary.failed}"
+            )
+        else:
+            logger.info("🌟 今天是周末，A股休市！直接跳过网络拉取，使用本地最新数据极速调试策略！")
 
         # 4. 策略列表（新增策略在此追加即可）
         strategies: list[BaseStrategy] = [
@@ -61,6 +67,7 @@ def main() -> None:
             HighTightFlagStrategy(engine=engine, settings=settings),
             LimitUpShakeoutStrategy(engine=engine, settings=settings),
             UptrendLimitDownStrategy(engine=engine, settings=settings),
+            RpsBreakoutStrategy(engine=engine, settings=settings),
         ]
 
         notifier = FeishuNotifier(settings)
