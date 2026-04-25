@@ -1,25 +1,12 @@
 """数据引擎模块：负责 SQLite 行情数据存储与 baostock 增量同步。"""
 
 import sqlite3
-from contextlib import contextmanager
 from pathlib import Path
 
 import pandas as pd
 
 from sequoia_x.core.config import Settings
 from sequoia_x.core.logger import get_logger
-
-
-@contextmanager
-def _suppress_stdout():
-    """临时屏蔽 stdout（baostock login/logout 会 print 无用信息）。"""
-    import sys, io
-    old = sys.stdout
-    sys.stdout = io.StringIO()
-    try:
-        yield
-    finally:
-        sys.stdout = old
 
 logger = get_logger(__name__)
 
@@ -45,17 +32,9 @@ CREATE INDEX IF NOT EXISTS idx_symbol_date ON stock_daily (symbol, date);
 
 
 def _bs_fetch_batch(tasks: list) -> list:
-    """多进程 worker：独立 login，批量拉取 baostock 数据。
-
-    Args:
-        tasks: [(symbol, bs_code, start_date, end_date), ...]
-
-    Returns:
-        [[symbol, date, open, high, low, close, volume, amount], ...]
-    """
+    """多进程 worker：独立 login，批量拉取 baostock 数据。"""
     import baostock as bs
-    with _suppress_stdout():
-        bs.login()
+    bs.login()
     results = []
     for symbol, bs_code, start, end in tasks:
         rs = bs.query_history_k_data_plus(
@@ -70,8 +49,7 @@ def _bs_fetch_batch(tasks: list) -> list:
             continue
         while rs.next():
             results.append([symbol] + rs.get_row_data())
-    with _suppress_stdout():
-        bs.logout()
+    bs.logout()
     return results
 
 
@@ -184,8 +162,7 @@ class DataEngine:
 
         today_str = date.today().strftime("%Y-%m-%d")
 
-        with _suppress_stdout():
-            lg = bs.login()
+        lg = bs.login()
         if lg.error_code != "0":
             logger.error(f"baostock 登录失败: {lg.error_msg}")
             return
@@ -256,8 +233,7 @@ class DataEngine:
                     logger.info(f"已处理 {i + 1}/{len(symbols)}，成功 {success} 跳过 {skipped} 失败 {failed}")
 
         finally:
-            with _suppress_stdout():
-                bs.logout()
+            bs.logout()
 
         logger.info(f"回填完成 — 成功: {success} | 跳过: {skipped} | 失败: {failed}")
 
@@ -267,8 +243,7 @@ class DataEngine:
         """通过 baostock 获取全市场 A 股代码列表。"""
         import baostock as bs
 
-        with _suppress_stdout():
-            lg = bs.login()
+        lg = bs.login()
         if lg.error_code != "0":
             logger.error(f"baostock 登录失败: {lg.error_msg}")
             return []
@@ -289,8 +264,7 @@ class DataEngine:
             logger.error(f"获取股票列表失败: {e}")
             return []
         finally:
-            with _suppress_stdout():
-                bs.logout()
+            bs.logout()
 
     def get_local_symbols(self) -> list[str]:
         with sqlite3.connect(self.db_path) as conn:
