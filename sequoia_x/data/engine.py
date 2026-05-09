@@ -149,7 +149,7 @@ class DataEngine:
         with sqlite3.connect(self.db_path) as conn:
             for d in df["date"].unique().tolist():
                 conn.execute("DELETE FROM stock_daily WHERE date = ?", (d,))
-            df.to_sql("stock_daily", conn, if_exists="append", index=False, method="multi")
+            df.to_sql("stock_daily", conn, if_exists="append", index=False, method="multi", chunksize=500)
             conn.commit()
 
         logger.info(f"sync_today_bulk: 写入 {count} 条数据")
